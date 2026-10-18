@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gear Inventory</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎥</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#E4E5E1; --panel:#F5F5F2; --ink:#1F2328; --muted:#5E646B; --line:#C9CBC5;
+  --tape:#F2C230; --tape-ink:#1F2328;
+  --ready:#2F7D4F; --out:#2E6CA8; --repair:#C8402F; --missing:#7A5AA8;
+  --radius:6px;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#1C1F22; --panel:#262A2E; --ink:#EDEEEA; --muted:#A3A8AD; --line:#3A3F44;
+    --ready:#5DBB83; --out:#6FA6DB; --repair:#E7735F; --missing:#B39BDA;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#1C1F22; --panel:#262A2E; --ink:#EDEEEA; --muted:#A3A8AD; --line:#3A3F44;
+  --ready:#5DBB83; --out:#6FA6DB; --repair:#E7735F; --missing:#B39BDA;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:16px/1.5 "Barlow",system-ui,-apple-system,"Segoe UI",sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--tape);outline-offset:2px}
+.wrap{max-width:860px;margin:0 auto;padding:20px 16px 96px}
+
+header h1{font:800 clamp(2.4rem,9vw,3.6rem)/.9 "Barlow Condensed","Arial Narrow",sans-serif;
+  margin:8px 0 4px;letter-spacing:-.01em}
+header p{margin:0;color:var(--muted)}
+
+.totals{display:grid;grid-template-columns:repeat(4,auto);justify-content:start;gap:28px;margin:20px 0;padding:14px 0;
+  border-top:2px solid var(--ink);border-bottom:1px solid var(--line)}
+.totals div{min-width:0}
+.totals b{display:block;font:800 1.9rem/1 "Barlow Condensed",sans-serif}
+.totals span{color:var(--muted);font-size:.9rem}
+
+.controls{display:grid;gap:10px;margin-bottom:12px}
+.search{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel)}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
+.chip{flex:none;padding:6px 12px;border:1px solid var(--line);border-radius:999px;background:transparent;cursor:pointer;font-size:.92rem}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row select{padding:8px 10px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel)}
+.btn{padding:9px 14px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);cursor:pointer;font-weight:600}
+.btn.primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn.danger{color:var(--repair);border-color:var(--repair);background:transparent}
+.spacer{flex:1}
+
+ul.list{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.item{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px 12px 12px;
+  display:grid;grid-template-columns:auto 1fr auto;gap:4px 12px;align-items:start}
+.item.packed{opacity:.6}
+.pack{width:24px;height:24px;margin-top:6px;accent-color:var(--ready);cursor:pointer}
+.tape{display:inline-block;background:var(--tape);color:var(--tape-ink);
+  font:800 1.3rem/1.15 "Barlow Condensed","Arial Narrow",sans-serif;padding:3px 10px 2px;
+  transform:rotate(-.6deg);clip-path:polygon(0 4%,3% 0,97% 3%,100% 0,99% 96%,96% 100%,2% 97%,0 100%);
+  max-width:100%;overflow-wrap:anywhere}
+.meta{color:var(--muted);font-size:.9rem;margin-top:4px}
+.notes{font-size:.92rem;margin-top:4px}
+.side{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.status{border:0;background:transparent;font-weight:600;font-size:.88rem;cursor:pointer;padding:2px 0;display:flex;align-items:center;gap:6px}
+.status::before{content:"";width:10px;height:10px;border-radius:50%;background:currentColor}
+.s-ready{color:var(--ready)} .s-out{color:var(--out)} .s-repair{color:var(--repair)} .s-missing{color:var(--missing)} .s-retired{color:var(--muted)}
+.item.retired .tape{background:var(--line);color:var(--muted)}
+.value{font-weight:600}
+.edit{border:0;background:none;color:var(--muted);text-decoration:underline;cursor:pointer;font-size:.88rem;padding:0}
+
+.empty{text-align:center;padding:48px 16px;border:2px dashed var(--line);border-radius:var(--radius);color:var(--muted)}
+.empty .tape{margin-bottom:10px}
+
+.fab{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));
+  padding:14px 20px;border-radius:999px;border:0;background:var(--tape);color:var(--tape-ink);
+  font:800 1.2rem/1 "Barlow Condensed",sans-serif;cursor:pointer;box-shadow:0 4px 0 var(--ink)}
+
+dialog{border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--ink);
+  padding:0;width:min(520px,calc(100% - 24px));max-height:calc(100% - 24px)}
+dialog::backdrop{background:rgba(20,22,25,.55)}
+dialog form{padding:18px;display:grid;gap:12px}
+dialog h2{margin:0;font:800 1.8rem/1 "Barlow Condensed",sans-serif}
+label{display:grid;gap:4px;font-weight:600;font-size:.92rem}
+label input,label select,label textarea{font-weight:400;padding:10px 12px;border:1px solid var(--line);border-radius:var(--radius);background:var(--bg)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:4px}
+footer{margin-top:28px;color:var(--muted);font-size:.88rem}
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);
+  background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:var(--radius);font-weight:600;
+  opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.show{opacity:1}
+@media (max-width:520px){.two{grid-template-columns:1fr}.totals{grid-template-columns:auto 1.4fr auto auto;gap:16px}.totals b{font-size:1.55rem}.totals span{font-size:.8rem;line-height:1.2}}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Gear Inventory</h1>
+    <p>Everything in the kit, what it's worth, and what's ready to shoot.</p>
+  </header>
+
+  <section class="totals" aria-label="Summary">
+    <div><b id="tCount">0</b><span>items</span></div>
+    <div><b id="tValue">$0</b><span>total value</span></div>
+    <div><b id="tReady">0</b><span>ready</span></div>
+    <div><b id="tAttn">0</b><span>need attention</span></div>
+  </section>
+
+  <div class="controls">
+    <input class="search" id="search" type="search" placeholder="Search name, brand, serial, notes" aria-label="Search gear">
+    <div class="chips" id="chips" role="group" aria-label="Filter by category"></div>
+    <div class="row">
+      <select id="statusFilter" aria-label="Filter by status">
+        <option value="">All statuses</option>
+        <option value="ready">Ready</option>
+        <option value="out">Checked out</option>
+        <option value="repair">Needs repair</option>
+        <option value="missing">Missing</option>
+        <option value="retired">Retired / sold</option>
+      </select>
+      <select id="sort" aria-label="Sort">
+        <option value="name">Sort: name</option>
+        <option value="cat">Sort: category</option>
+        <option value="value">Sort: value</option>
+        <option value="added">Sort: newest</option>
+      </select>
+      <span class="spacer"></span>
+      <button class="btn" id="clearPacked" type="button">Unpack all</button>
+    </div>
+  </div>
+
+  <ul class="list" id="list"></ul>
+
+  <footer>
+    <div class="row">
+      <button class="btn" id="exportBtn" type="button">Export backup</button>
+      <button class="btn" id="importBtn" type="button">Import backup</button>
+      <input type="file" id="importFile" accept="application/json,.json" hidden>
+      <button class="btn" id="csvBtn" type="button">Export CSV</button>
+    </div>
+    <p>Your list is saved in this browser on this device. Export a backup now and then, and import it to move your list to another phone or computer.</p>
+  </footer>
+</div>
+
+<button class="fab" id="addBtn" type="button">+ Add gear</button>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<dialog id="dlg">
+  <form id="form" method="dialog">
+    <h2 id="dlgTitle">Add gear</h2>
+    <label>Name<input name="name" required placeholder="e.g. Sony FX3"></label>
+    <div class="two">
+      <label>Category<select name="cat" id="catSelect"></select></label>
+      <label>Status
+        <select name="status">
+          <option value="ready">Ready</option>
+          <option value="out">Checked out</option>
+          <option value="repair">Needs repair</option>
+          <option value="missing">Missing</option>
+          <option value="retired">Retired / sold</option>
+        </select>
+      </label>
+    </div>
+    <div class="two">
+      <label>Brand / model<input name="brand" placeholder="e.g. Sony ILME-FX3"></label>
+      <label>Serial number<input name="serial"></label>
+    </div>
+    <div class="two">
+      <label>Value ($)<input name="value" type="number" min="0" step="0.01" inputmode="decimal"></label>
+      <label>Quantity<input name="qty" type="number" min="1" step="1" value="1" inputmode="numeric"></label>
+    </div>
+    <label>Notes<textarea name="notes" rows="2" placeholder="Which bag it lives in, accessories, repair details"></textarea></label>
+    <div class="actions">
+      <button class="btn danger" id="delBtn" type="button" hidden>Delete</button>
+      <span class="spacer"></span>
+      <button class="btn" value="cancel" formnovalidate>Cancel</button>
+      <button class="btn primary" id="saveBtn" value="save">Save gear</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+const CATS=["Camera","Lens","Audio","Power","Media","Support","Lighting","Drone","Bags","Other"];
+const STATUS={ready:"Ready",out:"Checked out",repair:"Needs repair",missing:"Missing",retired:"Retired / sold"};
+const ORDER=["ready","out","repair","missing","retired"];
+const KEY="gear-inventory-v1";
+const SEED=[{"id":"notion-1","added":1760000000000,"packed":false,"name":"Sony A7III","cat":"Camera","status":"retired","brand":"Sony","serial":"6174299","value":1799,"qty":1,"notes":"Bought 2019-11-07. Warranty to 2020-11-07"},{"id":"notion-2","added":1760000000001,"packed":false,"name":"Sony FX3","cat":"Camera","status":"ready","brand":"Sony","serial":"3383020","value":3898,"qty":1,"notes":"Bought 2022-08-24. Warranty to 2023-08-24"},{"id":"notion-3","added":1760000000002,"packed":false,"name":"E 50mm F1.8 OSS","cat":"Lens","status":"ready","brand":"Sony","serial":"2115115","value":248,"qty":1,"notes":"Bought 2019-11-07. Warranty to 2020-11-07"},{"id":"notion-4","added":1760000000003,"packed":false,"name":"FE 28-70mm F3.5-5.6 OSS","cat":"Lens","status":"ready","brand":"Sony","serial":"812262","value":0,"qty":1,"notes":"Kit Lens. Bought 2019-11-07. Warranty to 2020-11-07"},{"id":"notion-5","added":1760000000004,"packed":false,"name":"FE 70-200mm F2.8 GM OSS","cat":"Lens","status":"retired","brand":"Sony","serial":"1896238","value":2595,"qty":1,"notes":"Bought 2020-10-13. Warranty to 2021-10-13"},{"id":"notion-6","added":1760000000005,"packed":false,"name":"FE 24-70mm F2.8 GM II","cat":"Lens","status":"ready","brand":"Sony","serial":"1839027","value":2298,"qty":1,"notes":"Bought 2022-08-31. Warranty to 2022-08-31"},{"id":"notion-7","added":1760000000006,"packed":false,"name":"FE 20mm F1.8 G","cat":"Lens","status":"ready","brand":"Sony","serial":"1812095","value":898,"qty":1,"notes":"Bought 2020-01-07. Warranty to 2021-01-07"},{"id":"notion-8","added":1760000000007,"packed":false,"name":"24mm T1.5 DSX","cat":"Lens","status":"ready","brand":"Rokinon","serial":"DIP12313","value":749,"qty":1,"notes":"Warranty to 2022-01-13"},{"id":"notion-9","added":1760000000008,"packed":false,"name":"35mm T1.5 DSX","cat":"Lens","status":"ready","brand":"Rokinon","serial":"DIP21147","value":649,"qty":1,"notes":"Warranty to 2022-01-13"},{"id":"notion-10","added":1760000000009,"packed":false,"name":"50mm T1.5 DSX","cat":"Lens","status":"ready","brand":"Rokinon","serial":"DIP12300","value":599,"qty":1,"notes":"Warranty to 2022-01-13"},{"id":"notion-11","added":1760000000010,"packed":false,"name":"85mm T1.5 DSX","cat":"Lens","status":"ready","brand":"Rokinon","serial":"EGP25939","value":449,"qty":1,"notes":"Warranty to 2022-01-13"},{"id":"notion-12","added":1760000000011,"packed":false,"name":"Ronin RS2","cat":"Support","status":"ready","brand":"Ronin RS3","serial":"3N6SH9TR060PVL","value":999,"qty":1,"notes":"Name says RS2 but model says RS3. Check which one you have. Bought 2020-10-15. Warranty to 2021-10-15"},{"id":"notion-13","added":1760000000012,"packed":false,"name":"Tilta Basic Ring Grip","cat":"Support","status":"ready","brand":"Tilta","serial":"","value":239,"qty":1,"notes":"Bought 2022-06-27. Warranty to 2023-06-27"},{"id":"notion-14","added":1760000000013,"packed":false,"name":"Tilta Float","cat":"Support","status":"ready","brand":"Tilta Float Gimbal Support","serial":"","value":1287,"qty":1,"notes":"Bought 2021-11-29. Warranty to 2022-11-29"},{"id":"notion-15","added":1760000000014,"packed":false,"name":"Tilta Hydra Alien Arm","cat":"Support","status":"ready","brand":"Tilta","serial":"","value":1299,"qty":1,"notes":"Bought 2021-11-25. Warranty to 2022-11-25"},{"id":"notion-16","added":1760000000015,"packed":false,"name":"A9III","cat":"Camera","status":"ready","brand":"Sony ILCE-9M3","serial":"1350601","value":0,"qty":1,"notes":""}];
+let items=load(), cat="", editing=null;
+
+const $=id=>document.getElementById(id);
+const money=n=>"$"+Number(n||0).toLocaleString(undefined,{maximumFractionDigits:0});
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+function load(){try{const v=localStorage.getItem(KEY);if(v===null){localStorage.setItem(KEY,JSON.stringify(SEED));return structuredClone(SEED)}return JSON.parse(v)||[]}catch(e){return structuredClone(SEED)}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(items))}catch(e){toast("Couldn't save. Export a backup to keep your changes.")}}
+function toast(msg){const t=$("toast");t.textContent=msg;t.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove("show"),2200)}
+
+function buildChips(){
+  const used=new Set(items.map(i=>i.cat));
+  const list=["",...CATS.filter(c=>used.has(c))];
+  if(cat && !used.has(cat)) cat="";
+  $("chips").innerHTML=list.map(c=>`<button class="chip" type="button" data-cat="${c}" aria-pressed="${c===cat}">${c||"All"}</button>`).join("");
+}
+$("catSelect").innerHTML=CATS.map(c=>`<option>${c}</option>`).join("");
+
+function render(){
+  buildChips();
+  const q=$("search").value.trim().toLowerCase(), sf=$("statusFilter").value, sort=$("sort").value;
+  let view=items.filter(i=>(!cat||i.cat===cat)&&(!sf||i.status===sf)&&
+    (!q||[i.name,i.brand,i.serial,i.notes,i.cat].join(" ").toLowerCase().includes(q)));
+  view.sort((a,b)=>sort==="value"?(b.value*b.qty)-(a.value*a.qty):sort==="added"?b.added-a.added:
+    sort==="cat"?(a.cat.localeCompare(b.cat)||a.name.localeCompare(b.name)):a.name.localeCompare(b.name));
+
+  const owned=items.filter(i=>i.status!=="retired");
+  $("tCount").textContent=owned.reduce((s,i)=>s+i.qty,0);
+  $("tValue").textContent=money(owned.reduce((s,i)=>s+i.value*i.qty,0));
+  $("tReady").textContent=items.filter(i=>i.status==="ready").reduce((s,i)=>s+i.qty,0);
+  $("tAttn").textContent=items.filter(i=>i.status==="repair"||i.status==="missing").reduce((s,i)=>s+i.qty,0);
+
+  if(!items.length){
+    $("list").innerHTML=`<li class="empty"><span class="tape">No gear yet</span><p>Add your first camera, lens or battery with the Add gear button.</p></li>`;return;
+  }
+  if(!view.length){$("list").innerHTML=`<li class="empty"><p>Nothing matches. Clear the search or pick a different filter.</p></li>`;return}
+
+  $("list").innerHTML=view.map(i=>`
+    <li class="item${i.packed?" packed":""}${i.status==="retired"?" retired":""}">
+      <input class="pack" type="checkbox" data-pack="${i.id}" ${i.packed?"checked":""} aria-label="Packed: ${esc(i.name)}">
+      <div>
+        <span class="tape">${esc(i.name)}${i.qty>1?` ×${i.qty}`:""}</span>
+        <div class="meta">${esc(i.cat)}${i.brand?", "+esc(i.brand):""}${i.serial?` (S/N ${esc(i.serial)})`:""}</div>
+        ${i.notes?`<div class="notes">${esc(i.notes)}</div>`:""}
+      </div>
+      <div class="side">
+        <button class="status s-${i.status}" type="button" data-cycle="${i.id}" title="Tap to change status">${STATUS[i.status]}</button>
+        ${i.value?`<span class="value">${money(i.value*i.qty)}</span>`:""}
+        <button class="edit" type="button" data-edit="${i.id}">Edit</button>
+      </div>
+    </li>`).join("");
+}
+
+function openDialog(item){
+  editing=item?item.id:null;
+  const f=$("form");f.reset();
+  $("dlgTitle").textContent=item?"Edit gear":"Add gear";
+  $("delBtn").hidden=!item;
+  if(item){for(const k of ["name","cat","status","brand","serial","notes"]) f.elements[k].value=item[k]||"";
+    f.elements.value.value=item.value||"";f.elements.qty.value=item.qty||1;}
+  else if(cat) f.elements.cat.value=cat;
+  $("dlg").showModal();f.elements.name.focus();
+}
+
+$("form").addEventListener("submit",e=>{
+  if(e.submitter && e.submitter.value!=="save") return;
+  const f=e.target.elements;
+  const data={name:f.name.value.trim(),cat:f.cat.value,status:f.status.value,brand:f.brand.value.trim(),
+    serial:f.serial.value.trim(),value:parseFloat(f.value.value)||0,qty:Math.max(1,parseInt(f.qty.value)||1),notes:f.notes.value.trim()};
+  if(!data.name) return;
+  if(editing){Object.assign(items.find(i=>i.id===editing),data);toast("Gear saved")}
+  else{items.push({id:crypto.randomUUID?crypto.randomUUID():String(Date.now()+Math.random()),added:Date.now(),packed:false,...data});toast("Gear added")}
+  save();render();
+});
+$("delBtn").onclick=()=>{
+  const it=items.find(i=>i.id===editing);
+  if(it && confirm(`Delete ${it.name}?`)){items=items.filter(i=>i.id!==editing);save();$("dlg").close();render();toast("Gear deleted")}
+};
+
+$("list").addEventListener("click",e=>{
+  const t=e.target;
+  if(t.dataset.cycle){const it=items.find(i=>i.id===t.dataset.cycle);
+    it.status=ORDER[(ORDER.indexOf(it.status)+1)%ORDER.length];save();render();}
+  if(t.dataset.edit) openDialog(items.find(i=>i.id===t.dataset.edit));
+});
+$("list").addEventListener("change",e=>{
+  if(e.target.dataset.pack){items.find(i=>i.id===e.target.dataset.pack).packed=e.target.checked;save();render();}
+});
+$("chips").addEventListener("click",e=>{if(e.target.dataset.cat!==undefined){cat=e.target.dataset.cat;render()}});
+["search","statusFilter","sort"].forEach(id=>$(id).addEventListener("input",render));
+$("addBtn").onclick=()=>openDialog(null);
+$("clearPacked").onclick=()=>{items.forEach(i=>i.packed=false);save();render();toast("All gear unpacked")};
+
+function download(name,text,type){
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;
+  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+const stamp=()=>new Date().toISOString().slice(0,10);
+$("exportBtn").onclick=()=>{download(`gear-backup-${stamp()}.json`,JSON.stringify(items,null,2),"application/json");toast("Backup exported")};
+$("csvBtn").onclick=()=>{
+  const cols=["name","cat","brand","serial","qty","value","status","notes"];
+  const rows=[cols.join(","),...items.map(i=>cols.map(c=>`"${String(c==="status"?STATUS[i.status]:i[c]??"").replace(/"/g,'""')}"`).join(","))];
+  download(`gear-${stamp()}.csv`,rows.join("\n"),"text/csv");toast("CSV exported");
+};
+$("importBtn").onclick=()=>$("importFile").click();
+$("importFile").onchange=async e=>{
+  const file=e.target.files[0];if(!file) return;
+  try{const data=JSON.parse(await file.text());if(!Array.isArray(data)) throw 0;
+    if(items.length && !confirm("Replace your current list with this backup?")) return;
+    items=data.map(i=>({id:i.id||String(Math.random()),added:i.added||Date.now(),packed:!!i.packed,name:i.name||"Unnamed",
+      cat:CATS.includes(i.cat)?i.cat:"Other",status:STATUS[i.status]?i.status:"ready",brand:i.brand||"",serial:i.serial||"",
+      value:+i.value||0,qty:+i.qty||1,notes:i.notes||""}));
+    save();render();toast("Backup imported");
+  }catch(err){toast("That file isn't a gear backup. Choose a .json file exported from this page.")}
+  e.target.value="";
+};
+render();
+</script>
+</body>
+</html>
