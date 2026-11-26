@@ -135,8 +135,10 @@ footer{margin-top:28px;color:var(--muted);font-size:.88rem}
         <option value="added">Sort: newest</option>
       </select>
       <span class="spacer"></span>
+      <button class="btn primary" id="refreshBtn" type="button" hidden>Refresh from Notion</button>
       <button class="btn" id="clearPacked" type="button">Unpack all</button>
     </div>
+    <div class="meta" id="syncNote" aria-live="polite"></div>
   </div>
 
   <ul class="list" id="list"></ul>
@@ -193,8 +195,8 @@ footer{margin-top:28px;color:var(--muted);font-size:.88rem}
 const CATS=["Camera","Lens","Audio","Power","Media","Support","Lighting","Drone","Bags","Other"];
 const STATUS={ready:"Ready",out:"Checked out",repair:"Needs repair",missing:"Missing",retired:"Retired / sold"};
 const ORDER=["ready","out","repair","missing","retired"];
-const KEY="gear-inventory-v1";
-const SEED=[{"id":"notion-1","added":1760000000000,"packed":false,"name":"Sony A7III","cat":"Camera","status":"retired","brand":"Sony","serial":"6174299","value":1799,"qty":1,"notes":"Bought 2019-11-07. Warranty to 2020-11-07"},{"id":"notion-2","added":1760000000001,"packed":false,"name":"Sony FX3","cat":"Camera","status":"ready","brand":"Sony","serial":"3383020","value":3898,"qty":1,"notes":"Bought 2022-08-24. Warranty to 2023-08-24"},{"id":"notion-3","added":1760000000002,"packed":false,"name":"E 50mm F1.8 OSS","cat":"Lens","status":"ready","brand":"Sony","serial":"2115115","value":248,"qty":1,"notes":"Bought 2019-11-07. Warranty to 2020-11-07"},{"id":"notion-4","added":1760000000003,"packed":false,"name":"FE 28-70mm F3.5-5.6 OSS","cat":"Lens","status":"ready","brand":"Sony","serial":"812262","value":0,"qty":1,"notes":"Kit Lens. Bought 2019-11-07. Warranty to 2020-11-07"},{"id":"notion-5","added":1760000000004,"packed":false,"name":"FE 70-200mm F2.8 GM OSS","cat":"Lens","status":"retired","brand":"Sony","serial":"1896238","value":2595,"qty":1,"notes":"Bought 2020-10-13. Warranty to 2021-10-13"},{"id":"notion-6","added":1760000000005,"packed":false,"name":"FE 24-70mm F2.8 GM II","cat":"Lens","status":"ready","brand":"Sony","serial":"1839027","value":2298,"qty":1,"notes":"Bought 2022-08-31. Warranty to 2022-08-31"},{"id":"notion-7","added":1760000000006,"packed":false,"name":"FE 20mm F1.8 G","cat":"Lens","status":"ready","brand":"Sony","serial":"1812095","value":898,"qty":1,"notes":"Bought 2020-01-07. Warranty to 2021-01-07"},{"id":"notion-8","added":1760000000007,"packed":false,"name":"24mm T1.5 DSX","cat":"Lens","status":"ready","brand":"Rokinon","serial":"DIP12313","value":749,"qty":1,"notes":"Warranty to 2022-01-13"},{"id":"notion-9","added":1760000000008,"packed":false,"name":"35mm T1.5 DSX","cat":"Lens","status":"ready","brand":"Rokinon","serial":"DIP21147","value":649,"qty":1,"notes":"Warranty to 2022-01-13"},{"id":"notion-10","added":1760000000009,"packed":false,"name":"50mm T1.5 DSX","cat":"Lens","status":"ready","brand":"Rokinon","serial":"DIP12300","value":599,"qty":1,"notes":"Warranty to 2022-01-13"},{"id":"notion-11","added":1760000000010,"packed":false,"name":"85mm T1.5 DSX","cat":"Lens","status":"ready","brand":"Rokinon","serial":"EGP25939","value":449,"qty":1,"notes":"Warranty to 2022-01-13"},{"id":"notion-12","added":1760000000011,"packed":false,"name":"Ronin RS2","cat":"Support","status":"ready","brand":"Ronin RS3","serial":"3N6SH9TR060PVL","value":999,"qty":1,"notes":"Name says RS2 but model says RS3. Check which one you have. Bought 2020-10-15. Warranty to 2021-10-15"},{"id":"notion-13","added":1760000000012,"packed":false,"name":"Tilta Basic Ring Grip","cat":"Support","status":"ready","brand":"Tilta","serial":"","value":239,"qty":1,"notes":"Bought 2022-06-27. Warranty to 2023-06-27"},{"id":"notion-14","added":1760000000013,"packed":false,"name":"Tilta Float","cat":"Support","status":"ready","brand":"Tilta Float Gimbal Support","serial":"","value":1287,"qty":1,"notes":"Bought 2021-11-29. Warranty to 2022-11-29"},{"id":"notion-15","added":1760000000014,"packed":false,"name":"Tilta Hydra Alien Arm","cat":"Support","status":"ready","brand":"Tilta","serial":"","value":1299,"qty":1,"notes":"Bought 2021-11-25. Warranty to 2022-11-25"},{"id":"notion-16","added":1760000000015,"packed":false,"name":"A9III","cat":"Camera","status":"ready","brand":"Sony ILCE-9M3","serial":"1350601","value":0,"qty":1,"notes":""}];
+const KEY="gear-inventory-v2";
+const SEED=[{"id":"notion-1","added":1764100000001,"packed":false,"name":"Sony A7RVI","cat":"Camera","status":"ready","brand":"Sony A7RVI","serial":"1360392","value":4500,"qty":1,"notes":"Bought 2026-10-01"},{"id":"notion-2","added":1764100000002,"packed":false,"name":"Sony FX3","cat":"Camera","status":"ready","brand":"Sony FX3","serial":"3383020","value":3898,"qty":1,"notes":"Bought 2022-08-24. Warranty to 2023-08-24"},{"id":"notion-3","added":1764100000003,"packed":false,"name":"A9III","cat":"Camera","status":"ready","brand":"Sony ILCE-9M3","serial":"1350601","value":0,"qty":1,"notes":""},{"id":"notion-4","added":1764100000004,"packed":false,"name":"FE 85mm f/1.4 GM II","cat":"Lens","status":"ready","brand":"Sony FE 85mm f/1.4 GM II","serial":"6381556","value":2751,"qty":1,"notes":"Bought 2025-04-21"},{"id":"notion-5","added":1764100000005,"packed":false,"name":"FE 50-150mm F2 GM","cat":"Lens","status":"ready","brand":"Sony FE 50-150mm F2 GM","serial":"1802077","value":3900,"qty":1,"notes":"Bought 2025-05-14"},{"id":"notion-6","added":1764100000006,"packed":false,"name":"E 50mm F1.8 OSS","cat":"Lens","status":"ready","brand":"Sony 50mm F1.8","serial":"2115115","value":248,"qty":1,"notes":"Bought 2019-11-07. Warranty to 2020-11-07"},{"id":"notion-7","added":1764100000007,"packed":false,"name":"FE 28-70mm F3.5-5.6 OSS","cat":"Lens","status":"ready","brand":"Sony 28-70mm F3.5-5.6","serial":"812262","value":0,"qty":1,"notes":"Kit Lens. Bought 2019-11-07. Warranty to 2020-11-07"},{"id":"notion-8","added":1764100000008,"packed":false,"name":"FE 70-200mm F2.8 GM OSS","cat":"Lens","status":"retired","brand":"Sony 70-200mm F2.8 GM","serial":"1896238","value":2595,"qty":1,"notes":"Bought 2020-10-13. Warranty to 2021-10-13"},{"id":"notion-9","added":1764100000009,"packed":false,"name":"FE 24-70mm F2.8 GM II","cat":"Lens","status":"ready","brand":"Sony 24-70mm F2.8 GM II","serial":"1839027","value":2298,"qty":1,"notes":"Bought 2022-08-31. Warranty to 2022-08-31"},{"id":"notion-10","added":1764100000010,"packed":false,"name":"FE 20mm F1.8 G","cat":"Lens","status":"ready","brand":"Sony 20mm F1.8 G","serial":"1812095","value":898,"qty":1,"notes":"Bought 2020-01-07. Warranty to 2021-01-07"},{"id":"notion-11","added":1764100000011,"packed":false,"name":"Ronin RS2","cat":"Support","status":"ready","brand":"Ronin RS3","serial":"3N6SH9TR060PVL","value":999,"qty":1,"notes":"Name says RS2 but model says RS3. Check which one you have. Bought 2020-10-15. Warranty to 2021-10-15"},{"id":"notion-12","added":1764100000012,"packed":false,"name":"Tilta Basic Ring Grip","cat":"Support","status":"ready","brand":"Tilta Basic Ring","serial":"","value":239,"qty":1,"notes":"Bought 2022-06-27. Warranty to 2023-06-27"},{"id":"notion-13","added":1764100000013,"packed":false,"name":"Tilta Float","cat":"Support","status":"ready","brand":"Tilta Float Gimbal Support","serial":"","value":1287,"qty":1,"notes":"Bought 2021-11-29. Warranty to 2022-11-29"},{"id":"notion-14","added":1764100000014,"packed":false,"name":"Tilta Hydra Alien Arm","cat":"Support","status":"ready","brand":"Tilta Hydra Alien Arm","serial":"","value":1299,"qty":1,"notes":"Bought 2021-11-25. Warranty to 2022-11-25"}];
 let items=load(), cat="", editing=null;
 
 const $=id=>document.getElementById(id);
@@ -311,6 +313,62 @@ $("importFile").onchange=async e=>{
   }catch(err){toast("That file isn't a gear backup. Choose a .json file exported from this page.")}
   e.target.value="";
 };
+// Refresh from Notion (works when the page is opened in Claude with the Notion connector)
+const NOTION_DS="collection://029306c6-3421-4f34-986a-bde8430393ca";
+const CATMAP={"Cameras":"Camera","Grip & Support":"Support"};
+let mcp=null;
+const strip=s=>String(s??"").replace(/<[^>]*>/g,"").trim();
+function fromNotion(r){
+  const pid=(String(r.url||"").split("/p/")[1]||"").split("?")[0];
+  const c=strip(r.CATEGORY), cat=CATMAP[c]||(CATS.includes(c)?c:"Other");
+  const serial=strip(r["Serial Number"]);
+  const notes=[strip(r.DESCRIBTION),
+    r["date:PURCHASE DATE:start"]?"Bought "+r["date:PURCHASE DATE:start"]:"",
+    r["date:WARRANTY DATE:start"]?"Warranty to "+r["date:WARRANTY DATE:start"]:""]
+    .filter(Boolean).map(x=>x.replace(/\.$/,"")).join(". ");
+  return {notion:"np-"+pid,name:strip(r.NAME)||"Unnamed",cat,retired:/retired|sold/i.test(strip(r.STATUS)),
+    brand:[strip(r.BRAND),strip(r.MODEL)].filter(Boolean).join(" "),serial:/^n\/?a$/i.test(serial)?"":serial,
+    value:Math.round(parseFloat(strip(r["PURCHASE PRICE"]).replace(/[^0-9.]/g,""))||0),notes};
+}
+function merge(rows){
+  const keep=new Set();let added=0;
+  for(const n of rows.map(fromNotion)){
+    const {retired,...f}=n;
+    let it=items.find(i=>i.notion===n.notion)||items.find(i=>!i.notion&&String(i.id).startsWith("notion-")&&!keep.has(i.id)&&((n.serial&&i.serial===n.serial)||i.name.trim()===n.name));
+    if(it){Object.assign(it,f);it.status=retired?"retired":(it.status==="retired"?"ready":it.status)}
+    else{it={id:n.notion,added:Date.now(),packed:false,qty:1,...f,status:retired?"retired":"ready"};items.push(it);added++}
+    keep.add(it.id);
+  }
+  const before=items.length;
+  items=items.filter(i=>keep.has(i.id)||!(i.notion||String(i.id).startsWith("notion-")));
+  return {added,removed:before-items.length};
+}
+function errMsg(e){const c=e&&e.code;
+  return c==="needs_reauth"?"Reconnect Notion in claude.ai Settings → Connectors, then try again."
+  :c==="server_not_connected"?"Add Notion in claude.ai Settings → Connectors, then try again."
+  :c==="selection_required"?"Choose which Notion connection to use, then try again."
+  :(c==="approval_required"||c==="not_in_manifest"||c==="consent_required")?"This page needs your OK to read Notion. Tap Refresh and allow it."
+  :(c==="server_unavailable"||c==="upstream_error"||c==="rate_limited")?"Notion didn't answer. Try again in a moment."
+  :c==="bad_shape"?"Notion sent back something unexpected. Nothing was changed."
+  :"Couldn't refresh from Notion. Nothing was changed.";}
+function showSync(t){$("syncNote").textContent=t?"Last synced from Notion "+new Date(t).toLocaleString([], {dateStyle:"medium",timeStyle:"short"}):"";}
+try{showSync(localStorage.getItem(KEY+"-synced"))}catch(e){}
+$("refreshBtn").onclick=async()=>{
+  const b=$("refreshBtn");if(!mcp||b.disabled)return;b.disabled=true;b.textContent="Refreshing…";
+  try{
+    const res=await mcp.callTool("Notion","notion-query-data-sources",{data:{mode:"rows",data_source_url:NOTION_DS,limit:100}},{cache:false});
+    let p=res&&res.payload;if(typeof p==="string"){try{p=JSON.parse(p)}catch(e){}}
+    const rows=p&&Array.isArray(p.results)?p.results:null;
+    if(!rows||!rows.length)throw {code:"bad_shape"};
+    const r=merge(rows);save();render();
+    const t=new Date().toISOString();try{localStorage.setItem(KEY+"-synced",t)}catch(e){}
+    showSync(t);toast(`Synced ${rows.length} items`+(r.added||r.removed?` (${r.added} new, ${r.removed} removed)`:""));
+  }catch(err){$("syncNote").textContent=errMsg(err);toast("Refresh didn't go through")}
+  finally{b.disabled=false;b.textContent="Refresh from Notion"}
+};
+if(window.claude&&typeof window.claude.use==="function"){
+  window.claude.use("mcp").then(m=>{if(m){mcp=m;$("refreshBtn").hidden=false}}).catch(()=>{});
+}
 render();
 </script>
 </body>
