@@ -13,6 +13,7 @@ A simple web app for tracking my camera and video equipment: what I own, what it
 - Filter by category or status, and sort by name, category, value, or newest
 - Pack check: tick off gear as it goes in the bag, then "Unpack all" after the shoot
 - Export a JSON backup or a CSV, and import a backup on another device
+- Refresh from Notion: pulls the current Notion equipment list into the app (only when the app is opened in Claude with the Notion connector)
 - Works on phone and desktop, in light and dark mode
 
 ## Files
@@ -24,7 +25,7 @@ A simple web app for tracking my camera and video equipment: what I own, what it
 
 ## How data is saved
 
-The list is stored in the browser on each device. It does not sync between devices or back to Notion. To move the list or keep it safe, use **Export backup** and then **Import backup** on the other device.
+The list is stored in the browser on each device. It does not sync between devices, and it never writes back to Notion. When the app is opened in Claude, the **Refresh from Notion** button pulls in the latest list from Notion; on GitHub Pages that button is hidden. To move the list or keep it safe, use **Export backup** and then **Import backup** on the other device.
 
 The first time the app opens on a new device, it loads the gear list that came from Notion.
 
